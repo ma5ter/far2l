@@ -452,7 +452,7 @@ int ReplaceVariables(FARString &strStr, TSubstData *PSubstData)
 		DlgData[DlgSize + 1].Y1 = DlgSize + 3;
 		DlgData[DlgSize + 1].Flags|= DIF_HISTORY | DIF_USELASTHISTORY;
 		int HistoryNumber = DlgSize / 2;
-		HistoryName[HistoryNumber].Format(L"UserVar%d", HistoryNumber);
+		HistoryName[HistoryNumber].Clear(); // don't set any history name by default // .Format(L"UserVar%d", HistoryNumber);
 		DlgData[DlgSize + 1].strHistory = HistoryName[HistoryNumber];
 
 		if (!DlgSize) {

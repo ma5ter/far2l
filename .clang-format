@@ -90,9 +90,9 @@ PackConstructorInitializers:       NextLine
 AlignArrayOfStructures:            Left
 
 ############ Options added for far2l, see https://github.com/elfmz/llvm-project
-UseTab:                              ForContinuationAndIndentationAndComments
-AlignByTab:                          true
-BreakConstructorInitializers:        AfterColonSeparated
-SpaceBeforeAssignmentOperators:      OnlyTrivial
-AlignConsecutiveMembersAssignments:  true
-AllowLongTrailingComments:           true
+UseTab:                              Always
+#AlignByTab:                          true
+BreakConstructorInitializers: AfterColon
+SpaceBeforeAssignmentOperators: true
+#AlignConsecutiveMembersAssignments:  true
+#AllowLongTrailingComments:           true
