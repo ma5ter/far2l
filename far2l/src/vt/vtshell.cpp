@@ -23,7 +23,6 @@
 #include <base64.h> 
 #include <StackSerializer.h>
 #include <ScopeHelpers.h>
-#include <os_call.hpp>
 #include "dirmix.hpp"
 #include "vtansi.h"
 #include "vtlog.h"
@@ -223,7 +222,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )  
+		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
 			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
@@ -280,7 +279,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		} else {
 			_pipes_fallback_in = _pipes_fallback_out = -1;
 			struct termios ts = {};
-			if (os_call_int(tcgetattr, fd_term, &ts) == 0) {
+			if (tcgetattr(fd_term, &ts) == 0) {
 				ts.c_lflag |= ISIG | ICANON | ECHO;
 #ifdef IUTF8
 				ts.c_iflag |= IUTF8;
@@ -288,7 +287,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				//ts.c_lflag&= ~ECHO;
 				ts.c_cc[VINTR] = 003;
 				// ts.c_cc[VQUIT] = 034;
-				os_call_int(tcsetattr, fd_term, TCSAFLUSH, (const struct termios*)&ts );
+				if (tcsetattr( fd_term, TCSAFLUSH, &ts ) == -1) {
+					perror("InitTerminal: tcsetattr");
+				}
+			} else {
+				perror("InitTerminal: tcgetattr");
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);
@@ -343,6 +346,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 	}
 
 	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
@@ -493,6 +498,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 	}
 
 	virtual void OnKeypadChange(unsigned char keypad)
@@ -840,6 +847,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 
 		std::string cmd_str;
 		if (!_slavename.empty()) {

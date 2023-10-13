@@ -28,6 +28,7 @@
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 
+static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
@@ -100,9 +101,8 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool 
 	}
 
 	struct winsize w{};
-	if (GetWinSize(w)) {
-		g_winport_con_out->SetSize(w.ws_col, w.ws_row);
-	}
+	GetWinSize(w);
+	g_winport_con_out->SetSize(w.ws_col, w.ws_row);
 	g_winport_con_out->GetSize(_cur_width, _cur_height);
 	g_vtb = this;
 }
@@ -128,18 +128,17 @@ TTYBackend::~TTYBackend()
 	DetachNotifyPipe();
 }
 
-bool TTYBackend::GetWinSize(struct winsize &w)
+void TTYBackend::GetWinSize(struct winsize &w)
 {
 	int r = ioctl(_stdout, TIOCGWINSZ, &w);
 	if (UNLIKELY(r != 0)) {
 		r = ioctl(_stdin, TIOCGWINSZ, &w);
 		if (UNLIKELY(r != 0)) {
-			perror("GetWinSize");
-			return false;
+			perror("TIOCGWINSZ");
+			w.ws_row = g_far2l_term_height;
+			w.ws_col = g_far2l_term_width;
 		}
 	}
-
-	return true;
 }
 
 void TTYBackend::DetachNotifyPipe()
@@ -461,9 +460,7 @@ void TTYBackend::DispatchPalette(TTYOutput &tty_out)
 void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
 	struct winsize w{};
-	if (!GetWinSize(w)) {
-		return;
-	}
+	GetWinSize(w);
 
 	if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
 		g_winport_con_out->SetSize(w.ws_col, w.ws_row);
@@ -908,6 +905,14 @@ bool TTYBackend::OnConsoleIsActive()
 	return false;//true;
 }
 
+void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
+{
+	__sync_add_and_fetch ( &s_terminal_size_change_id, 1);
+	if (g_vtb) {
+		g_vtb->KickAss(flush_input_queue);
+	}
+}
+
 static void OnFar2lKey(bool down, StackSerializer &stk_ser)
 {
 	try {
@@ -925,6 +930,13 @@ static void OnFar2lKey(bool down, StackSerializer &stk_ser)
 	} catch (std::exception &) {
 		fprintf(stderr, "OnFar2lKey: broken args!\n");
 	}
+}
+
+static void OnFar2lTerminalSize(StackSerializer &stk_ser)
+{
+	stk_ser.PopNum(g_far2l_term_height);
+	stk_ser.PopNum(g_far2l_term_width);
+	TTYBackend_OnTerminalDamaged(false);
 }
 
 static void OnFar2lKeyCompact(bool down, StackSerializer &stk_ser)
@@ -1024,6 +1036,10 @@ void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 
 		case FARTTY_INPUT_KEYDOWN_COMPACT: case FARTTY_INPUT_KEYUP_COMPACT:
 			OnFar2lKeyCompact(code == FARTTY_INPUT_KEYDOWN_COMPACT, stk_ser);
+			break;
+
+		case FARTTY_INPUT_TERMINAL_SIZE:
+			OnFar2lTerminalSize(stk_ser);
 			break;
 
 		default:
@@ -1149,14 +1165,6 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 }
 
 
-void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
-{
-	__sync_add_and_fetch ( &s_terminal_size_change_id, 1);
-	if (g_vtb) {
-		g_vtb->KickAss(flush_input_queue);
-	}
-}
-
 static void OnSigWinch(int)
 {
 	TTYBackend_OnTerminalDamaged(false);
@@ -1173,14 +1181,18 @@ static void OnSigTstp(int signo)
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, false);
 
-	os_call_int(tcgetattr, g_std_out, &g_ts_cont);
+	if (tcgetattr(g_std_out, &g_ts_cont) == -1) {
+		perror("OnSigTstp - tcgetattr");
+	}
 	raise(SIGSTOP);
 }
 
 
 static void OnSigCont(int signo)
 {
-	os_call_int(tcsetattr, g_std_out, TCSADRAIN, (const struct termios*)&g_ts_cont);
+	if (tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont ) == -1) {
+		perror("OnSigCont - tcsetattr");
+	}
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, true);
 
