@@ -160,6 +160,7 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	ClearStackBookmarks();
 	TopList = EndList = CurLine = nullptr;
 	NumLastLine = 0;
+	NumLine = 0;
 }
 
 void Editor::KeepInitParameters()
@@ -1960,6 +1961,7 @@ int Editor::ProcessKey(int Key)
 			if (!Flags.Check(FEDITOR_LOCKMODE)) {
 				Lock();
 				Undo(Key == KEY_CTRLSHIFTZ);
+				Flags.Set(FEDITOR_NEWUNDO);
 				Unlock();
 				Show();
 			}
@@ -2990,7 +2992,7 @@ void Editor::InsertString()
 	/*
 		$ 10.08.2000 skv
 		There is only one return - if new will fail.
-		In this case things are realy bad.
+		In this case things are really bad.
 		Move TextChanged to the end of functions
 		AFTER all modifications are made.
 	*/

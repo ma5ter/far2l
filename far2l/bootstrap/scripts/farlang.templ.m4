@@ -1636,12 +1636,12 @@ upd:"Password expiration (sec):"
 
 SudoTitle
 "Операция требует повышения привилегий"
-"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
+"Operation requires privileges elevation"
+upd:"Operation requires privileges elevation"
+upd:"Operation requires privileges elevation"
+upd:"Operation requires privileges elevation"
+upd:"Operation requires privileges elevation"
+upd:"Operation requires privileges elevation"
 "Операція вимагає підвищення привілеїв"
 "Дзея патрабуе павышэння прывілеі"
 
@@ -1658,12 +1658,12 @@ upd:"Enter sudo password"
 
 SudoConfirm
 "Подтвердите использование привилегий"
-"Confirm elevated priviledges use"
-upd:"Confirm elevated priviledges use"
-upd:"Confirm elevated priviledges use"
-upd:"Confirm elevated priviledges use"
-upd:"Confirm elevated priviledges use"
-upd:"Confirm elevated priviledges use"
+"Confirm elevated privileges use"
+upd:"Confirm elevated privileges use"
+upd:"Confirm elevated privileges use"
+upd:"Confirm elevated privileges use"
+upd:"Confirm elevated privileges use"
+upd:"Confirm elevated privileges use"
 "Підтвердіть використання привілеїв"
 "Пацвярдзіце ужыванне прывілеі"
 
@@ -5174,6 +5174,18 @@ AskWipeRO
 "Desea limpiarlo?"
 "Ви хочете знищити його?"
 "Вы жадаеце знішчыць яго?"
+
+DeleteSymLink1
+l:
+"Это symlink на файл"
+"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
 
 DeleteHardLink1
 l:
