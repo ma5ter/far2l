@@ -123,7 +123,7 @@ transforms your commands into the corresponding external archiver calls.
   ~FAR2L features - Getting Started~@Far2lGettingStarted@
 
 @Far2lGettingStarted
-$ #FAR2L features - Getting Started#
+$ # FAR2L features - Getting Started#
     FAR2L is Linux port FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
@@ -138,6 +138,7 @@ $ #FAR2L features - Getting Started#
     If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
     To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
     to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+    run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -263,8 +264,12 @@ See LICENSE.txt and LICENSE.Far2.txt in sources tree for details
 
 @CmdLine
 $ # FAR2L: command line switches#
-  You can specify following switches in the command line or FAR2L_ARGS environment variable:
+  Actual list see via #far2l -h# or #far2l --help#.
 
+  You can specify following switches in the command line.
+
+
+ #FAR2L backend-specific options:#
   #--tty#
   Runs far2l with ~TTY backend~@UIBackends@ instead of autodetecting GUI/TTY mode. While GUI
 backed is preferred from user experience point of view, sometimes it may be necessary
@@ -290,66 +295,67 @@ runs inside.
   Use PRIMARY selection instead of CLIPBOARD X11 selection. This argument applies only to far2l
 that runs with WX backend.
 
-  #/a#
+  Backend-specific options also can be set via the #FAR2L_ARGS# environment variable
+(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
+
+
+ #FAR2L command-line options:#
+  #-a#
   Disable display of characters with codes 0 - 31 and 255. May be useful when
 executing FAR2L under telnet.
 
-  #/ag#
+  #-ag#
   Disable display of pseudographics with codes > 127.
 
-  #/an#
+  #-an#
   Disable display of pseudographics characters completely.
 
-  #/e[<line>[:<pos>]] <filename>#
-  Edit the specified file. After /e you may optionally specify editor start line
+  #-e[<line>[:<pos>]] <filename>#
+  Edit the specified file. After -e you may optionally specify editor start line
 and line position.
-  For example: far /e70:2 readme.
+  For example: #far2l -e70:2 readme#.
 
-  #/p[<path>]#
+  #-p[<path>]# [Unsupported in far2l]
   Search for "main" plugins in the folder given in <path>.
   Several search paths may be given separated by ';'.
 
-  #/co#
+  #-co#
   Forces FAR2L to load plugins from cache only. Plugins are loaded faster this way,
 but new or changed plugins are not discovered. Should be used ONLY with a stable
 list of plugins. After adding, replacing or deleting a plugin FAR2L should be loaded
 without this switch. If the cache is empty, no plugins will be loaded.
 
-  Remarks about switches /p and /co:
+  Remarks about switches -p and -co:
 
-  - ^<wrap>if /p is empty, then FAR2L will be loaded with no plugins;
-  - ^<wrap>if /p is given with a <path>, then only plugins from <path> will be loaded;
-  - ^<wrap>if only the /co switch is given and plugins cache is not empty, then plugins
+  - ^<wrap>if -p is empty, then FAR2L will be loaded with no plugins;
+  - ^<wrap>if -p is given with a <path>, then only plugins from <path> will be loaded;
+  - ^<wrap>if only the -co switch is given and plugins cache is not empty, then plugins
 will be loaded from cache;
-  - ^<wrap>/co is ignored, if /p is given;
-  - ^<wrap>if /p and /co are not given, then plugins will be loaded from the main folder,
+  - ^<wrap>-co is ignored, if -p is given;
+  - ^<wrap>if -p and -co are not given, then plugins will be loaded from the main folder,
 and from the path given at the "~Path for personal plugins~@PluginsManagerSettings@" parameter.
 
-  #/m#
+  #-m#
   FAR2L will not load macros from the registry when started.
 
-  #/ma#
+  #-ma#
   Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
-  #/u <username>#
-  Allows to have separate settings for different users.
-  For example: far /u guest
+  #-u <identity># or #-u <path>#
+  Allows to specify separate settings identity or FS location.
+  #-u <path>#: in path/.config/ (if path is full path)
+  #-u <identity>#: in ~~/.config/far2l/custom/identity/ or in $XDG_CONFIG_HOME/far2l/custom/identity/
 
-  FAR2L will set the ~environment variable~@FAREnv@ "FARUSER" to the value <username>.
+  #-v <filename>#
+  View the specified file.
+  #-v - <command line>#
+  Executes given command line and opens viewer with its output.
+  For example, #far2l -v - ls# will view ls command output.
 
-  #/v <filename>#
-  View the specified file. If <filename> is `#-#', data is read from the stdin.
-
-  For example, "dir|far /v -" will view dir command output.
-
-  If the input stream is empty when using '-' (for example, you have not specified
-the "dir" command in the provided example), FAR2L will wait forever for the end of data
-in the input stream. This will probably be fixed in a later version of FAR2L.
-
-  #/w#
+  #-w# [Unsupported in far2l]
   Stretch to console window instead of console buffer.
 
-  #/x#
+  #-x# [Unsupported in far2l]
   Disable exception handling. This option has been designed for plugin developers,
 and it is not recommended to specify it during normal operation.
 
@@ -925,7 +931,7 @@ $ #Special commands#
 
    #far:about#  - Far information, list and information about plugins.
 
-   #far:config# - Configuration editor (draft now).
+   #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
@@ -938,6 +944,39 @@ $ #Special commands#
    #exit far#   - close far2l.
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
+
+@FarConfig
+$ #Configuration editor#
+ Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+
+ Allows to view and edit all Far Manager’s options.
+
+ Most options can be changed from the ~Options menu~@OptMenu@,
+however some options are available only here or in configuration ini-files.
+
+ The options are displayed in a list with four fields per item:
+  #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
+  #-# The type (boolean, integer, dword, string, binary or unknown)
+  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
+ If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
+(‘?’ character marked items without default value).
+
+ Besides the list navigation keys, the following key combinations are supported:
+
+ #Enter# or #F4#       Edit the value.
+
+ #Del#               Reset the item to its default value.
+
+ #Ctrl-H#            Toggle display of all or only changed items.
+
+ #Ctrl-A#            Toggle column name arranging by left or by dot.
+
+ #Ctrl-Alt-F#        Toggle quick filtering mode.
+
+ #Esc# or #F10#        Close.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @MsWheel
 $ #Mouse: wheel support#
@@ -1468,7 +1507,7 @@ $ #Menus: options menu#
    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @Terminal
-$ #Terminal
+$ #Terminal#
     #FAR2L# contains built-in terminal emulator, allowing to execute command line applications see their output and control functionality.
 In order to keep usual shell experience far2l first launches supported user's shell in interactive mode and sends it commands typed
 in its own command line.
@@ -1477,13 +1516,14 @@ by default by giving options while you're typing command. Second is driven by ba
 #SHIFT+double-TAB# (quickly press TAB twice while keeping SHIFT pressed).
     #'exit' command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
 command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
-In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
+In case you want to exit far2l by typing command: type 'exit far' ~pseudo-command~@SpecCmd@ - it will be recognized by far2l as whole app close request.
     #Hotkeys and scrolling during running command:# you can use #Ctrl+Shift+F3# to open history of output in built-in viewer or
 #Ctrl+Shift+F4# to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
 built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
 - will hide that viewer. #Ctrl+C, Ctrl+Z# hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
 it and everything in shell by pressing #Ctrl+Alt+C#. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
-or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use #Ctrl+Alt+Z# to put far2l instance to background, releasing terminal but leaving active command execution.
+or lost of unsaved data in killed applications. You can also use #Ctrl+Alt+Z# to put command execution to background.
+You may return to background'ed command from ~Screens switching menu~@ScrSwitch@ (#F12# in panels).
     #Hotkeys and scrolling when NOT running command:# while #Ctrl+Shift+F3/F4# still functioning in such mode you can also use simple #F3/F4# to get history
 opened in viewer/editor respectively. Also you can press #F8# key to cleanup history and screen. You can switch between panels and terminal by pressing #Ctrl+O#
 or clicking top left corner.
@@ -1493,7 +1533,7 @@ like live full keyboard keys recognition with with keydown/up reaction. Also 'ho
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
 
-  Text selected with mouse automatically copied to clipboard
+  Text selected with mouse automatically copied to clipboard.
 
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
@@ -1528,8 +1568,10 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   Put far2l instance to background                          #Ctrl+Alt+Z#
     (only if far2l works in TTY backend)
 
+  See also: ~pseudo-commands~@SpecCmd@
+
 @UIBackends
-$ #UI Backends
+$ #UI Backends#
     Depending on build options and available platform features #FAR2L# can render
 its interface using different so-called backends:
 
@@ -4040,6 +4082,9 @@ will be copied; This option affects only the current copy session and not saved
 for later copy operations.
     #Also ask on R/O files# - controls whether an additional confirmation
 dialog should be displayed for read-only files.
+    If the corresponding item in ~Confirmations~@ConfirmDlg@ is unchecked,
+then "Already existing files" are disabled
+and the #Overwrite# action is silently applied.
 
     When moving files, to determine whether the operation should be performed
 as a copy with subsequent deletion or as a direct move (within one physical
@@ -4109,6 +4154,9 @@ and sort the files by hard link number.
 
     Symbolic links point to files and non-local folders, relative paths also supported.
 
+    #Default suggestion# in field #Link type# may be changed in ~System settings~@SystemSettings@ to
+    - Hardlink for files, Symlink for directories
+    - Symlink always
 
 @ErrCopyItSelf
 $ #Error: copy/move onto itself.#
@@ -4174,9 +4222,13 @@ panels and screens with these instances. #Ctrl-Tab# switches to the next
 screen, #Ctrl-Shift-Tab# to the previous, #F12# shows a list of all available
 screens.
 
-    The number of background viewers and editors is displayed in the left panel
-upper left corner. This may be disabled by using ~Panel settings~@PanelSettings@
-dialog.
+    Additionally there can be multiple terminal commands running in background.
+You may view or activate any of them also from #F12# menu: use #F3# to view
+current command output or Enter to switch to it in terminal.
+
+    The number of background terminal commands, viewers and editors is displayed
+in the left panel upper left corner. This may be disabled by using
+~Panel settings~@PanelSettings@ dialog.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 

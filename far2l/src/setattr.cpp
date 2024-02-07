@@ -60,6 +60,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "FSFileFlags.h"
 
+struct FSFileFlagsSafe : FSFileFlags
+{
+	FSFileFlagsSafe(const FARString &path, DWORD attrs)
+		: FSFileFlags((attrs & FILE_ATTRIBUTE_DEVICE) ? DEVNULL : path.GetMB())
+	{ }
+};
+
 enum SETATTRDLG
 {
 	SA_DOUBLEBOX,
@@ -639,9 +646,9 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &ComboItem,
 	return true;
 }
 
-static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
+static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName, DWORD FileAttr)
 {
-	FSFileFlags FFFlags(strSelName.GetMB());
+	FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
 	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
 			|| AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
 		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
@@ -726,6 +733,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		return false;
 	}
 
+	const short ColX1Of3 = 5;
+	const short ColX2Of3 = ColX1Of3 + (DlgX - 3) / 3;
+	const short ColX3Of3 = ColX2Of3 + (DlgX - 3) / 3;
+
 	DialogDataEx AttrDlgData[] = {
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
@@ -741,28 +752,28 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_COMBOBOX,  18,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 
 		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
-		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
+		{DI_CHECKBOX,  ColX1Of3,            9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,  ColX2Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  ColX3Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_CHECKBOX,  5,                   10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  short(DlgX / 3),     10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  ColX1Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,  ColX2Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  ColX3Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,      5,                   11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
-		{DI_TEXT,      short(DlgX / 3),     11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
-		{DI_TEXT,      short(2 * DlgX / 3), 11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_CHECKBOX,  5,                   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
-		{DI_CHECKBOX,  short(DlgX / 3),     13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
-		{DI_CHECKBOX,  short(DlgX / 3),     14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+		{DI_TEXT,      ColX1Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_TEXT,      ColX2Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_TEXT,      ColX3Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_CHECKBOX,  ColX1Of3,            12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_CHECKBOX,  ColX1Of3,            13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
+		{DI_CHECKBOX,  ColX1Of3,            14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
+		{DI_CHECKBOX,  ColX2Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_CHECKBOX,  ColX2Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_CHECKBOX,  ColX2Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
+		{DI_CHECKBOX,  ColX3Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_CHECKBOX,  ColX3Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_CHECKBOX,  ColX3Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
 		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},
@@ -871,11 +882,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		FARString strLinkName;
 
 		if (SelCount == 1) {
-			std::unique_ptr<FSFileFlags> FFFlags;
-			if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-				FFFlags.reset(new FSFileFlags(strSelName.GetMB()));
-			}
-
+			FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
 				DlgParam.SymlinkButtonTitles[1] = Msg::SetAttrSymlinkObjectInfo;
@@ -941,11 +948,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					AttrDlg[AP[i].Item].Selected =
 							(FileMode & AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
-				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected =
-						(FFFlags && FFFlags->Immutable()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-				AttrDlg[SA_CHECKBOX_APPEND].Selected = (FFFlags && FFFlags->Append()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = (FFFlags && FFFlags->Hidden()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
 
@@ -1040,17 +1046,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_OWNER], GetFileOwner, strComputerName, strSelName);
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
 
-					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-						FSFileFlags FFFlags(strSelName.GetMB());
-						if (FFFlags.Immutable())
-							AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
-						if (FFFlags.Append())
-							AttrDlg[SA_CHECKBOX_APPEND].Selected++;
+					FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
+					if (FFFlags.Immutable())
+						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
+					if (FFFlags.Append())
+						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-						if (FFFlags.Hidden())
-							AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
+					if (FFFlags.Hidden())
+						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif
-					}
 				}
 			} else {
 				// BUGBUG, copy-paste
@@ -1234,9 +1238,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 					}
 
-					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-						ApplyFSFileFlags(AttrDlg, strSelName);
-					}
+					ApplyFSFileFlags(AttrDlg, strSelName, FileAttr);
 				}
 				/* Multi *********************************************************** */
 				else {
@@ -1398,16 +1400,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-											ApplyFSFileFlags(AttrDlg, strFullName);
-										}
+										ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 									}
 								}
 							}
 						}
-						if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-							ApplyFSFileFlags(AttrDlg, strSelName);
-						}
+						ApplyFSFileFlags(AttrDlg, strSelName, FileAttr);
 
 					}	// END: while (SrcPanel->GetSelNameCompat(...))
 				}

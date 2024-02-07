@@ -75,6 +75,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "drivemix.hpp"
 #include "xlat.hpp"
+#include "vt/vtshell.h"
 #include <StackHeapArray.hpp>
 
 static int DragX, DragY, DragMove;
@@ -502,7 +503,7 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 		ChDisk.Show();
 
 		while (!ChDisk.Done()) {
-			int Key;
+			FarKey Key;
 			/*if(Events.DeviceArchivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArchivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
 			{
 				Key=KEY_CTRLR;
@@ -915,7 +916,7 @@ void Panel::FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &s
 	}
 }
 
-int64_t Panel::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t Panel::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	return 0;
 }
@@ -936,7 +937,7 @@ static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec, DWORD Key)
 		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout>>> %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
 		if (rec->Event.KeyEvent.uChar.UnicodeChar
 				&& WCHAR(Key & KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar)		//???
-			Key = (Key & 0xFFF10000) | rec->Event.KeyEvent.uChar.UnicodeChar;			//???
+			Key = (Key & (~KEY_MASKF)) | (rec->Event.KeyEvent.uChar.UnicodeChar & KEY_MASKF);	//???
 
 																						// // _SVS(SysLog(L"_CorrectFastFindKbdLayout<<< %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
 	}
@@ -949,7 +950,7 @@ void Panel::FastFind(int FirstKey)
 	// // _SVS(CleverSysLog Clev(L"Panel::FastFind"));
 	INPUT_RECORD rec;
 	FARString strLastName, strName;
-	int Key, KeyToProcess = 0;
+	FarKey Key, KeyToProcess = 0;
 	WaitInFastFind++;
 	{
 		int FindX = Min(X1 + 9, ScrX - 22);
@@ -1495,11 +1496,17 @@ void Panel::ShowScreensCount()
 		int Editors = FrameManager->GetFrameCountByType(MODALTYPE_EDITOR);
 		int Dialogs = FrameManager->GetFrameCountByType(MODALTYPE_DIALOG);
 		bool HasPluginsTasks = CtrlObject->Plugins.HasBackgroundTasks();
+		unsigned int vts = VTShell_Count();
 
-		if (Viewers > 0 || Editors > 0 || Dialogs > 0 || HasPluginsTasks) {
+		if (Viewers > 0 || Editors > 0 || Dialogs > 0 || vts > 0 || HasPluginsTasks) {
 			FARString strScreensText;
 
 			char Prefix = '[';
+			if (vts > 0) {
+				strScreensText.Format(L"%cT%u", Prefix, vts);
+				Prefix = ' ';
+			}
+
 			if (Viewers > 0) {
 				strScreensText.Format(L"%cV%d", Prefix, Viewers);
 				Prefix = ' ';
@@ -1940,7 +1947,7 @@ bool Panel::SaveShortcutFolder(int Pos)
 }
 
 /*
-int Panel::ProcessShortcutFolder(int Key,BOOL ProcTreePanel)
+int Panel::ProcessShortcutFolder(FarKey Key,BOOL ProcTreePanel)
 {
 	FARString strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
 

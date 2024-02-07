@@ -76,19 +76,20 @@ private:
 	bool ProcessFarCommands(const wchar_t *CmdLine);
 	void DrawComboBoxMark(wchar_t MarkChar);
 	void ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir, FARString strFile=L"");
+	void CheckForKeyPressAfterCmd(int r);
 
 public:
 	CommandLine();
 	virtual ~CommandLine();
 
 public:
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	virtual void ResizeConsole();
 
-	std::string GetConsoleLog(bool colored);
+	std::string GetConsoleLog(HANDLE con_hnd, bool colored);
 	int GetCurDir(FARString &strCurDir);
 	BOOL SetCurDir(const wchar_t *CurDir);
 
@@ -99,6 +100,8 @@ public:
 
 	void ExecString(const wchar_t *Str, bool SeparateWindow = false, bool DirectRun = false,
 			bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
+
+	void SwitchToBackgroundTerminal(size_t vt_index);
 
 	void ShowViewEditHistory();
 

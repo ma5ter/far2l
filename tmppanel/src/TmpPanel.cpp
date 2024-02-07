@@ -99,12 +99,12 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 #endif
 				&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
 
-		while (argv && *argv == _T(' '))
+		while (*argv == _T(' '))
 			argv++;
 
 		while (lstrlen(argv) > 1 && (*argv == _T('+') || *argv == _T('-'))) {
 			int k = 0;
-			while (argv && *argv != _T(' ') && *argv != _T('<')) {
+			while (*argv && *argv != _T(' ') && *argv != _T('<')) {
 				k++;
 				argv++;
 			}
@@ -120,7 +120,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 			if (*(TMP + 1) >= _T('0') && *(TMP + 1) <= _T('9'))
 				CurrentCommonPanel = *(TMP + 1) - _T('0');
 
-			while (argv && *argv == _T(' '))
+			while (*argv == _T(' '))
 				argv++;
 		}
 
@@ -225,8 +225,8 @@ static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
 		}
 
 		TCHAR consoleTitle[255];
-		DWORD tlen = GetConsoleTitle(consoleTitle, ARRAYSIZE(consoleTitle));
-		SetConsoleTitle(argv);
+		DWORD tlen = GetConsoleTitle(NULL, consoleTitle, ARRAYSIZE(consoleTitle));
+		SetConsoleTitle(NULL, argv);
 		fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
 		/*
 			BOOL Created=CreateProcess(NULL,fullcmd,NULL,NULL,TRUE,0,NULL,workDir,&si,&pi);
@@ -242,7 +242,7 @@ static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
 		CloseHandle(FileHandle);
 
 		if (tlen)
-			SetConsoleTitle(consoleTitle);
+			SetConsoleTitle(NULL, consoleTitle);
 	}
 
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;

@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "cmdline.hpp"
 #include "UsedChars.hpp"
+#include "help.hpp"
 
 VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 		MenuDataEx *Data,				// пункты меню
@@ -122,6 +123,9 @@ VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 
 	if (!CheckFlags(VMENU_LISTBOX))
 		FrameManager->ModalizeFrame(this);
+
+	if (ParentDialog)
+		SetBottomTitle(L"Ctrl-Alt-F"); // by default info about keys for toggle filtering feature
 }
 
 VMenu::~VMenu()
@@ -566,7 +570,7 @@ void VMenu::DeleteItems()
 	SetFlags(VMENU_UPDATEREQUIRED);
 }
 
-int VMenu::GetCheck(int Position)
+uint32_t VMenu::GetCheck(int Position)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -581,12 +585,12 @@ int VMenu::GetCheck(int Position)
 	if (!(Item[ItemPos]->Flags & LIF_CHECKED))
 		return 0;
 
-	int Checked = Item[ItemPos]->Flags & 0xFFFF;
+	const uint32_t Check = Item[ItemPos]->Flags & 0xFFFF;
 
-	return Checked ? Checked : 1;
+	return Check ? Check : 1;
 }
 
-void VMenu::SetCheck(int Check, int Position)
+void VMenu::SetCheck(uint32_t Check, int Position)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -668,12 +672,12 @@ void VMenu::FilterStringUpdated(bool bLonger)
 		SetSelectPos(0, 1);
 }
 
-bool VMenu::IsFilterEditKey(int Key)
+bool VMenu::IsFilterEditKey(FarKey Key)
 {
-	return (Key >= (int)KEY_SPACE && Key < 0xffff) || Key == KEY_BS;
+	return (Key >= (int)KEY_SPACE && WCHAR_IS_VALID(Key)) || Key == KEY_BS;
 }
 
-bool VMenu::ShouldSendKeyToFilter(int Key)
+bool VMenu::ShouldSendKeyToFilter(FarKey Key)
 {
 	if (Key == KEY_CTRLALTF)
 		return true;
@@ -689,9 +693,9 @@ bool VMenu::ShouldSendKeyToFilter(int Key)
 	return false;
 }
 
-int VMenu::ReadInput(INPUT_RECORD *GetReadRec)
+FarKey VMenu::ReadInput(INPUT_RECORD *GetReadRec)
 {
-	int ReadKey;
+	FarKey ReadKey;
 
 	for (;;) {
 		ReadKey = Modal::ReadInput(GetReadRec);
@@ -707,7 +711,7 @@ int VMenu::ReadInput(INPUT_RECORD *GetReadRec)
 	return ReadKey;
 }
 
-int64_t VMenu::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t VMenu::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_C_EMPTY:
@@ -863,7 +867,7 @@ int64_t VMenu::VMProcess(int OpCode, void *vParam, int64_t iParam)
 
 bool VMenu::AddToFilter(const wchar_t *str)
 {
-	int Key;
+	FarKey Key;
 
 	if (bFilterEnabled && !bFilterLocked) {
 		while ((Key = *str)) {
@@ -881,7 +885,7 @@ bool VMenu::AddToFilter(const wchar_t *str)
 	return false;
 }
 
-int VMenu::ProcessKey(int Key)
+int VMenu::ProcessKey(FarKey Key)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -1149,7 +1153,7 @@ int VMenu::ProcessKey(int Key)
 			if (!CheckKeyHiOrAcc(Key, 0, 0)) {
 				if (Key == KEY_SHIFTF1 || Key == KEY_F1) {
 					if (ParentDialog)
-						;	// ParentDialog->ProcessKey(Key);
+						Help::Present(L"MenuCmd",L"",FHELP_NOSHOWERROR);	// ParentDialog->ProcessKey(Key);
 					else
 						ShowHelp();
 

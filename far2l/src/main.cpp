@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "SafeMMap.hpp"
 #include "ConfigRW.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
 
 #ifdef DIRECT_RT
@@ -104,11 +104,11 @@ static void print_help(const char *self)
 			"      Allows to specify separate settings identity or FS location.\n"
 			" -v <filename>\n"
 			"      View the specified file.\n"
-			" -v - command line\n"
+			" -v - <command line>\n"
 			"      Executes given command line and opens viewer with its output.\n"
 			" -e[<line>[:<pos>]] [filename]\n"
 			"      Edit the specified file with optional cursor position specification or empty new file.\n"
-			" -e[<line>[:<pos>]] - command line\n"
+			" -e[<line>[:<pos>]] - <command line>\n"
 			"      Executes given command line and opens editor with its output.\n"
 			"\n",
 			self);
@@ -594,7 +594,7 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
-	LoadConfig();
+	ConfigOptLoad();
 	InitConsole();
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
@@ -727,7 +727,7 @@ int _cdecl main(int argc, char *argv[])
 			return sudo_main_askpass();
 		if (strcmp(name, "far2l_sudoapp") == 0)
 			return sudo_main_dispatcher(argc - 1, argv + 1);
-		if (argc >= 4) {
+		if (argc >= 5) {
 			if (strcmp(argv[1], "--libexec") == 0) {
 				return libexec(argv[2], argv[3], argv[4], argc - 5, argv + 5);
 			}

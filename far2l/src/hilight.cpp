@@ -259,12 +259,14 @@ void HighlightFiles::ClearData()
 static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR,
 		COL_PANELSELECTEDCURSOR};
 
-const HighlightDataColor DefaultStartingColors =
+static const HighlightDataColor DefaultStartingColors =
 	{
 		{0xFF00, 0xFF00, 0xFF00, 0xFF00, // Color[0]
 		0xFF00, 0xFF00, 0xFF00, 0xFF00}, // Color[1]
 		0x00FF0000 // MarkChar
 	};
+
+const HighlightDataColor ZeroColors{0};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
 {
@@ -563,7 +565,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 	while (1) {
 		while (!HiMenu.Done()) {
-			int Key = HiMenu.ReadInput();
+			FarKey Key = HiMenu.ReadInput();
 			int SelectPos = HiMenu.GetSelectPos();
 			NeedUpdate = FALSE;
 

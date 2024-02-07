@@ -145,6 +145,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @CmdLine
 $ # FAR: a FAR parancssori kapcsolói#
+  Actual list see via #far2l -h# or #far2l --help#.
+
   A FAR a következő parancssori kapcsolókkal indítható:
 
   #/a#    ^<wrap>Letiltja a 0-31-ig terjedő és a 255-ös ASCII kódú
@@ -793,7 +795,7 @@ $ #Special commands#
 
    #far:about#  - Far information, list and information about plugins.
 
-   #far:config# - Configuration editor (draft now).
+   #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
@@ -806,6 +808,39 @@ $ #Special commands#
    #exit far#   - close far2l.
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
+
+@FarConfig
+$ #Configuration editor#
+ Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+
+ Allows to view and edit all Far Manager’s options.
+
+ Most options can be changed from the ~Options menu~@OptMenu@,
+however some options are available only here or in configuration ini-files.
+
+ The options are displayed in a list with four fields per item:
+  #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
+  #-# The type (boolean, integer, dword, string, binary or unknown)
+  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
+ If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
+(‘?’ character marked items without default value).
+
+ Besides the list navigation keys, the following key combinations are supported:
+
+ #Enter# or #F4#       Edit the value.
+
+ #Del#               Reset the item to its default value.
+
+ #Ctrl-H#            Toggle display of all or only changed items.
+
+ #Ctrl-A#            Toggle column name arranging by left or by dot.
+
+ #Ctrl-Alt-F#        Toggle quick filtering mode.
+
+ #Esc# or #F10#        Close.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @MsWheel
 $ #Egér: görgő támogatása#
@@ -3589,6 +3624,9 @@ fájlok írják felül a célhelyen létezőket;
     #Csak olvasható fájloknál is kérdez# - ha a célhelyen "csak
 olvasható" attribútumú fájllal találkozik, a
 felülírás előtt újabb megerősítést kér.
+    If the corresponding item in ~Confirmations~@ConfirmDlg@ is unchecked,
+then "Already existing files" are disabled
+and the #Overwrite# action is silently applied.
 
     A ~Rendszer beállítások~@SystemSettings@ menü "Másoláshoz a rendszerrutin
 használata" opciójával a FAR a Windows operációs rendszer CopyFileEx nevű
@@ -3732,6 +3770,9 @@ linkeket. Mivel a szimbolikus link a mappa csomópontok fejlettebb
 változata, ezért az ilyen linkek fájlokra és nem-helyi mappákra is
 mutathatnak, valamint relatív elérési útvonalak is használhatók.
 
+    #Default suggestion# in field #Link type# may be changed in ~System settings~@SystemSettings@ to
+    - Hardlink for files, Symlink for directories
+    - Symlink always
 
 @ErrCopyItSelf
 $ #Hiba: nem másolható vagy mozgatható önmagára#

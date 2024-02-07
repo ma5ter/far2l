@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "config.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "fileowner.hpp"
 #include "dirmix.hpp"
 #include "console.hpp"
@@ -158,7 +158,7 @@ ControlObject::~ControlObject()
 
 	if (Cp() && Cp()->ActivePanel) {
 		if (Opt.AutoSaveSetup)
-			SaveConfig(0);
+			ConfigOptSave(false);
 
 		if (Cp()->ActivePanel->GetMode() != PLUGIN_PANEL) {
 			FARString strCurDir;
@@ -234,9 +234,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		Lines.emplace_back(Msg::VTStartTipPendCmdTitle);
 		Lines.emplace_back(Msg::VTStartTipPendCmdFn);
 		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltC);
-		if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-			Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltZ);
-		}
+		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltZ);
 		Lines.emplace_back(Msg::VTStartTipPendCmdMouse);
 		Lines.emplace_back(Msg::VTStartTipMouseSelect);
 

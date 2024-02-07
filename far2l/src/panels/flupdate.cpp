@@ -194,6 +194,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		OldData.Swap(ListData);
 
 	ListData.Clear();
+	SymlinksCache.clear();
 
 	int ReadOwners = IsColumnDisplayed(OWNER_COLUMN);
 	int ReadGroups = IsColumnDisplayed(GROUP_COLUMN);
@@ -553,6 +554,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 	if (!CtrlObject->Plugins.GetFindData(hPlugin, &PanelData, &PluginFileCount, 0)) {
 		ListData.Clear();
+		SymlinksCache.clear();
 		PopPlugin(TRUE);
 		Update(KeepSelection);
 
@@ -594,7 +596,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 		OldData.Swap(ListData);
 
 	ListData.Clear();
-
+	SymlinksCache.clear();
 	ListData.ReserveExtra(PluginFileCount);
 
 	if (!Filter)
@@ -640,7 +642,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 		TotalFileSize+= CurListData->FileSize;
 	}
-	if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
+	if (!ListData.IsEmpty() && ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING)))
 		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(),
 				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
 
