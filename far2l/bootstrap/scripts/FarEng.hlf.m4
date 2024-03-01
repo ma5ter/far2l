@@ -359,6 +359,10 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   Disable exception handling. This option has been designed for plugin developers,
 and it is not recommended to specify it during normal operation.
 
+  #-set:<parameter>=<value>#
+  Override the configuration parameter, see ~far:config~@FarConfig@ for details.
+  Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0x10001 -set:System.FindFolders=false
+
 
   It is possible to specify at most two paths (to folders, files or archives) or
 two commands with plugin prefix in the command line. The first path applies to the
@@ -652,6 +656,7 @@ insert the local name of the file with ~symbolic links~@HardSymLink@ expanded.
 
   6. ^<wrap>About hotkeys and other tricks of built-in terminal emulator: ~read here~@Terminal@
 
+    See also ~Special commands~@SpecCmd@.
 
 @FuncCmd
 $ #Panel control commands - service commands#
@@ -927,7 +932,9 @@ in the ~interface settings~@InterfSettings@.
 
 @SpecCmd
 $ #Special commands#
- Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
+ Special FAR pseudo-command usually starting with a prefix and a colon are processed
+in the far2l ~internal command line~@CmdLineCmd@ and
+in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@.
 
    #far:about#  - Far information, list and information about plugins.
 
@@ -2236,9 +2243,9 @@ the main menu saved in the registry.
     To close the menu even if submenus are open use #Shift-F10#.
 
     See also:
- 
-    The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
-    Common ~menu~@MenuCmd@ keyboard commands.
+      ~Special commands~@SpecCmd@.
+      The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssoc
 $ #File associations #
@@ -2268,7 +2275,9 @@ desired association from the menu.
 #Use Windows registered types# option in ~System settings~@SystemSettings@
 is on, FAR2L tries to use Windows association to execute this file type;
 
-    See also: common ~menu~@MenuCmd@ keyboard commands.
+    See also:
+      ~Special commands~@SpecCmd@.
+      common ~menu~@MenuCmd@ keyboard commands.
 
 
 @FileAssocModify
@@ -4243,8 +4252,8 @@ at a time, and the command 'rar32 m !.!.rar !.!' will move all selected files
 into RAR archives with the same names. The command 'explorer /select,!.!' will
 start the Windows Explorer and set the cursor to the current file or directory.
 
+    See also ~"Special commands"~@SpecCmd@
     See also ~"Operating system commands"~@OSCommands@
-
 
 @OSCommands
 $ #Operating system commands#
