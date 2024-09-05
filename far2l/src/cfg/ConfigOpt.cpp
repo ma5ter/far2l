@@ -67,6 +67,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AllXLats.hpp"
 #include "ConfigOpt.hpp"
 #include "ConfigOptSaveLoad.hpp"
+#include "pick_color256.hpp"
+#include "pick_colorRGB.hpp"
 
 void SanitizeHistoryCounts();
 
@@ -119,7 +121,10 @@ static constexpr const char *NSecVMenu = "VMenu";
 static FARString strKeyNameConsoleDetachKey;
 
 const ConfigOpt g_cfg_opts[] {
-	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
+	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, (BYTE *)DefaultPalette8bit},
+	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * 8, (BYTE *)Palette, nullptr},
+	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, g_tempcolors256},
+	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, (BYTE *)g_tempcolorsRGB},
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
@@ -127,6 +132,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecScreen, "ScreenSaver", &Opt.ScreenSaver, 0},
 	{true,  NSecScreen, "ScreenSaverTime", &Opt.ScreenSaverTime, 5},
 	{false, NSecScreen, "DeltaXY", &Opt.ScrSize.dwDeltaXY, 0},
+	{true,  NSecScreen, "CursorBlinkInterval", &Opt.CursorBlinkTime, 500},
 
 	{true,  NSecCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat, 0},
 	{true,  NSecCmdline, "PromptFormat", &Opt.CmdLine.strPromptFormat, L"$p$# "},
@@ -156,6 +162,11 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecInterface, "ExclusiveAltRight", &Opt.ExclusiveAltRight, 0},
 	{true,  NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
+
+	{true,  NSecInterface, "DateFormat", &Opt.DateFormat, GetDateFormatDefault()},
+	{true,  NSecInterface, "DateSeparator", &Opt.strDateSeparator, GetDateSeparatorDefaultStr()},
+	{true,  NSecInterface, "TimeSeparator", &Opt.strTimeSeparator, GetTimeSeparatorDefaultStr()},
+	{true,  NSecInterface, "DecimalSeparator", &Opt.strDecimalSeparator, GetDecimalSeparatorDefaultStr()},
 
 	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
 	{true,  NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
@@ -247,6 +258,8 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "SaveFoldersHistory", &Opt.SaveFoldersHistory, 1},
 	{false, NSecSystem, "SavePluginFoldersHistory", &Opt.SavePluginFoldersHistory, 0},
 	{true,  NSecSystem, "SaveViewHistory", &Opt.SaveViewHistory, 1},
+	{true,  NSecSystem, "HistoryRemoveDupsRule", &Opt.HistoryRemoveDupsRule, 2},
+	{true,  NSecSystem, "AutoHighlightHistory", &Opt.AutoHighlightHistory, 1},
 	{true,  NSecSystem, "AutoSaveSetup", &Opt.AutoSaveSetup, 0},
 	{true,  NSecSystem, "DeleteToRecycleBin", &Opt.DeleteToRecycleBin, 0},
 	{true,  NSecSystem, "DeleteToRecycleBinKillLink", &Opt.DeleteToRecycleBinKillLink, 1},
@@ -285,6 +298,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "SearchOutFormatWidth", &Opt.FindOpt.strSearchOutFormatWidth, L"14,13,0"},
 	{true,  NSecSystem, "FindFolders", &Opt.FindOpt.FindFolders, 1},
 	{true,  NSecSystem, "FindSymLinks", &Opt.FindOpt.FindSymLinks, 1},
+	{true,  NSecSystem, "FindCaseSensitiveFileMask", &Opt.FindOpt.FindCaseSensitiveFileMask, 1},
 	{true,  NSecSystem, "UseFilterInSearch", &Opt.FindOpt.UseFilter, 0},
 	{true,  NSecSystem, "FindCodePage", &Opt.FindCodePage, CP_AUTODETECT},
 	{false, NSecSystem, "CmdHistoryRule", &Opt.CmdHistoryRule, 0},
@@ -364,6 +378,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "Highlight", &Opt.Highlight, 1},
 	{true,  NSecPanel, "SortFolderExt", &Opt.SortFolderExt, 0},
 	{true,  NSecPanel, "SelectFolders", &Opt.SelectFolders, 0},
+	{true,  NSecPanel, "CaseSensitiveCompareSelect", &Opt.PanelCaseSensitiveCompareSelect, 1},
 	{true,  NSecPanel, "ReverseSort", &Opt.ReverseSort, 1},
 	{false, NSecPanel, "RightClickRule", &Opt.PanelRightClickRule, 2},
 	{false, NSecPanel, "CtrlFRule", &Opt.PanelCtrlFRule, 1},
@@ -379,7 +394,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelLeft, "SortOrder", &Opt.LeftPanel.SortOrder, 1},
 	{true,  NSecPanelLeft, "SortGroups", &Opt.LeftPanel.SortGroups, 0},
 	{true,  NSecPanelLeft, "NumericSort", &Opt.LeftPanel.NumericSort, 0},
-	{true,  NSecPanelLeft, "CaseSensitiveSortNix", &Opt.LeftPanel.CaseSensitiveSort, 1},
+	{true,  NSecPanelLeft, "CaseSensitiveSort", &Opt.LeftPanel.CaseSensitiveSort, 0},
 	{true,  NSecPanelLeft, "Folder", &Opt.strLeftFolder, L""},
 	{true,  NSecPanelLeft, "CurFile", &Opt.strLeftCurFile, L""},
 	{true,  NSecPanelLeft, "SelectedFirst", &Opt.LeftSelectedFirst, 0},
@@ -393,7 +408,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelRight, "SortOrder", &Opt.RightPanel.SortOrder, 1},
 	{true,  NSecPanelRight, "SortGroups", &Opt.RightPanel.SortGroups, 0},
 	{true,  NSecPanelRight, "NumericSort", &Opt.RightPanel.NumericSort, 0},
-	{true,  NSecPanelRight, "CaseSensitiveSortNix", &Opt.RightPanel.CaseSensitiveSort, 1},
+	{true,  NSecPanelRight, "CaseSensitiveSort", &Opt.RightPanel.CaseSensitiveSort, 0},
 	{true,  NSecPanelRight, "Folder", &Opt.strRightFolder, L""},
 	{true,  NSecPanelRight, "CurFile", &Opt.strRightCurFile, L""},
 	{true,  NSecPanelRight, "SelectedFirst", &Opt.RightSelectedFirst, 0},
@@ -431,10 +446,13 @@ const ConfigOpt g_cfg_opts[] {
 
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
 
+	{true,  NSecVMenu, "MenuStopWrapOnEdge", &Opt.VMenu.MenuLoopScroll, 1},
+
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "MBtnClick", &Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},
-	{true,  NSecVMenu, "HistShowTimes", ARRAYSIZE(Opt.HistoryShowTimes), Opt.HistoryShowTimes, nullptr}
+	{true,  NSecVMenu, "HistShowTimes", ARRAYSIZE(Opt.HistoryShowTimes), Opt.HistoryShowTimes, nullptr},
+	{true,  NSecVMenu, "HistDirsPrefixLen", &Opt.HistoryDirsPrefixLen, 20},
 };
 
 size_t ConfigOptCount() noexcept
@@ -547,6 +565,7 @@ static void SanitizeXlat()
 
 static void SanitizePalette()
 {
+#if 0
 	// Уточняем алгоритм "взятия" палитры.
 	for (
 		size_t I = COL_PRIVATEPOSITION_FOR_DIF165ABOVE - COL_FIRSTPALETTECOLOR + 1;
@@ -567,6 +586,40 @@ static void SanitizePalette()
 			*/
 		}
 	}
+#endif
+}
+
+static void MergePalette()
+{
+	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+
+		Palette[i] &= 0xFFFFFFFFFFFFFF00;
+		Palette[i] |= Palette8bit[i];
+	}
+
+//	uint32_t basepalette[32];
+//	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
+/*
+	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+		uint8_t color = Palette8bit[i];
+
+		Palette[i] &= 0xFFFFFFFFFFFFFF00;
+
+		if (!(Palette[i] & FOREGROUND_TRUECOLOR)) {
+			Palette[i] &= 0xFFFFFF000000FFFF;
+			Palette[i] += ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
+			Palette[i] += FOREGROUND_TRUECOLOR;
+		}
+		if (!(Palette[i] & BACKGROUND_TRUECOLOR)) {
+			Palette[i] &= 0x000000FFFFFFFFFF;
+			Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
+			Palette[i] += BACKGROUND_TRUECOLOR;
+		}
+
+		Palette[i] += color;
+	}
+*/
 }
 
 void ConfigOptFromCmdLine()
@@ -643,6 +696,12 @@ void ConfigOptLoad()
 
 	SanitizeHistoryCounts();
 
+	if (Opt.CursorBlinkTime < 100)
+		Opt.CursorBlinkTime = 100;
+
+	if (Opt.CursorBlinkTime > 500)
+		Opt.CursorBlinkTime = 500;
+
 	if (Opt.ShowMenuBar)
 		Opt.ShowMenuBar = 1;
 
@@ -650,7 +709,8 @@ void ConfigOptLoad()
 		Opt.PluginMaxReadData = 0x20000;
 
 	Opt.HelpTabSize = 8; // пока жестко пропишем...
-	SanitizePalette();
+//	SanitizePalette();
+	MergePalette();
 
 	Opt.ViOpt.ViewerIsWrap&= 1;
 	Opt.ViOpt.ViewerWrap&= 1;
@@ -703,6 +763,11 @@ void ConfigOptLoad()
 	}
 
 	FileFilter::InitFilter(cfg_reader);
+
+	// avoid negative decrement for now as hiding command line by Ctrl+Down is a new feature and may confuse
+	// some users, so let this state be not persistent for now so such users may recover by simple restart
+	Opt.LeftHeightDecrement = std::max(Opt.LeftHeightDecrement, 0);
+	Opt.RightHeightDecrement = std::max(Opt.RightHeightDecrement, 0);
 
 	g_config_ready = true;
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */

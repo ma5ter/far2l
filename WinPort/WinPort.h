@@ -21,6 +21,10 @@ extern "C" {
 	void WinPortHelp();
 	const wchar_t *WinPortBackend();
 
+	// true means far2l runs under smoke testing and code must
+	// not skip events from input queue that sometimes used to make UX smoother
+	BOOL WinPortTesting();
+
 	///console API
 	WINPORT_DECL(ForkConsole,HANDLE,());
 	WINPORT_DECL(JoinConsole,VOID,(HANDLE hConsole));
@@ -48,6 +52,7 @@ extern "C" {
 	WINPORT_DECL(FillConsoleOutputAttribute, BOOL, (HANDLE hConsoleOutput, DWORD64 qAttributes, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten));
 	WINPORT_DECL(FillConsoleOutputCharacter, BOOL, (HANDLE hConsoleOutput, WCHAR cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
 	WINPORT_DECL(SetConsoleActiveScreenBuffer, BOOL,(HANDLE hConsoleOutput));
+	WINPORT_DECL(SetConsoleCursorBlinkTime,VOID,(HANDLE hConsoleOutput, DWORD dwMilliseconds ));
 
 	WINPORT_DECL(FlushConsoleInputBuffer,BOOL,(HANDLE hConsoleInput));
 	WINPORT_DECL(GetNumberOfConsoleInputEvents,BOOL,(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents));
@@ -68,6 +73,9 @@ extern "C" {
 	WINPORT_DECL(GetConsoleDisplayMode,BOOL,(LPDWORD lpModeFlags));
 	WINPORT_DECL(SetConsoleWindowMaximized,VOID,(BOOL Maximized));
 	WINPORT_DECL(GetConsoleColorPalette,BYTE,(HANDLE hConsoleOutput)); // Returns current color resolution: 4, 8, 24
+
+	WINPORT_DECL(GetConsoleBasePalette,VOID,(HANDLE hConsoleOutput, void *p));
+	WINPORT_DECL(SetConsoleBasePalette,BOOL,(HANDLE hConsoleOutput, void *p));
 
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ));
 	WINPORT_DECL(SetConsoleCtrlHandler, BOOL, (PHANDLER_ROUTINE HandlerRoutine, BOOL Add ));
@@ -95,6 +103,7 @@ extern "C" {
 #define TWEAK_STATUS_SUPPORT_OSC52CLIP_SET	0x04
 #define TWEAK_STATUS_SUPPORT_CHANGE_FONT	0x08
 #define TWEAK_STATUS_SUPPORT_TTY_PALETTE	0x10
+#define TWEAK_STATUS_SUPPORT_BLINK_RATE		0x20
 
 	WINPORT_DECL(SaveConsoleWindowState,VOID,());
 	WINPORT_DECL(ConsoleChangeFont, VOID, ());
@@ -102,7 +111,13 @@ extern "C" {
 	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text));
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (HANDLE hConsoleOutput, const CHAR **titles));
-	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK)); // 0xffffffff - to apply default color
+
+	// Query/Change or only Query palette color with specified index:
+	// if Index set to (DWORD)-1 then operates on currently chosen color (not using pallette)
+	// if initial *ColorFG or *ColorBK was set to (DWORD)-1 - it will change to default color
+	// if initial *ColorFG or *ColorBK was set to (DWORD)-2 - this color will not be changed (Query-only operation)
+	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK));
+
 	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (HANDLE hConsoleOutput, BOOL Deferring));
 
 #ifdef WINPORT_REGISTRY

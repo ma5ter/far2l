@@ -149,7 +149,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	apiGetCurrentDirectory(strSaveDir);
 	{
 		if (!SetCurPath()) {
-			FlushInputBuffer();		// Очистим буффер ввода, т.к. мы уже можем быть в другом месте...
+			if (!WinPortTesting())
+				FlushInputBuffer();		// Очистим буффер ввода, т.к. мы уже можем быть в другом месте...
 			return;
 		}
 	}
@@ -290,9 +291,9 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 					if (!IsShowTitle) {
 						if (!DrawMessage) {
-							Text(X1 + 1, Y1, COL_PANELBOX, Title);
+							Text(X1 + 1, Y1, FarColorToReal(COL_PANELBOX), Title);
 							IsShowTitle = TRUE;
-							SetColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
+							SetFarColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 						}
 					}
 

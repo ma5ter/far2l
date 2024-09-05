@@ -20,7 +20,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	int _stdin = 0, _stdout = 1;
 	bool _ext_clipboard;
 	bool _norgb;
-	const char *_nodetect = "";
+	DWORD _nodetect = NODETECT_NONE;
 	bool _far2l_tty = false;
 	bool _osc52clip_set = false;
 
@@ -135,7 +135,10 @@ protected:
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 	virtual BYTE OnConsoleGetColorPalette();
+	virtual void OnConsoleGetBasePalette(void *pbuff);
+	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
+	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);
@@ -147,7 +150,7 @@ protected:
 	DWORD QueryControlKeys();
 
 public:
-	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

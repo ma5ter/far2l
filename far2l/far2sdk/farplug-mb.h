@@ -345,7 +345,7 @@ namespace oldfar
 		DWORD  Flags;
 		DWORD  Reserved;
 		int    ColorCount;
-		LPBYTE Colors;
+		uint64_t *Colors;
 	};
 
 	struct FarDialogItem
@@ -1497,6 +1497,8 @@ namespace oldfar
 	typedef void (WINAPI *FARSTDLOCALSTRLWR)(char *s1);
 	typedef int (WINAPI *FARSTDLOCALSTRICMP)(const char *s1,const char *s2);
 	typedef int (WINAPI *FARSTDLOCALSTRNICMP)(const char *s1,const char *s2,int n);
+	typedef int (WINAPI *FARSTDLOCALSTRCMP)(const char *s1,const char *s2);
+	typedef int (WINAPI *FARSTDLOCALSTRNCMP)(const char *s1,const char *s2,int n);
 
 	enum PROCESSNAME_FLAGS
 	{

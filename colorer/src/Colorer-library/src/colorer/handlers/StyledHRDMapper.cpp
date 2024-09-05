@@ -1,74 +1,61 @@
-#include <cstdio>
-#include <colorer/handlers/StyledHRDMapper.h>
-#include <colorer/unicode/UnicodeTools.h>
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <colorer/xml/XmlParserErrorHandler.h>
-#include <colorer/xml/XmlTagDefs.h>
+#include "colorer/handlers/StyledHRDMapper.h"
+#include "colorer/Exception.h"
+#include "colorer/base/XmlTagDefs.h"
+#include "colorer/xml/XmlReader.h"
 
-const int StyledRegion::RD_BOLD = 1;
-const int StyledRegion::RD_ITALIC = 2;
-const int StyledRegion::RD_UNDERLINE = 4;
-const int StyledRegion::RD_STRIKEOUT = 8;
-
-StyledHRDMapper::StyledHRDMapper() {}
 StyledHRDMapper::~StyledHRDMapper()
 {
-  for (const auto& it : regionDefines) {
-    delete it.second;
-  }
   regionDefines.clear();
 }
 
-void StyledHRDMapper::loadRegionMappings(XmlInputSource* is)
+void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
 {
-  xercesc::XercesDOMParser xml_parser;
-  XmlParserErrorHandler error_handler;
-  xml_parser.setErrorHandler(&error_handler);
-  xml_parser.setLoadExternalDTD(false);
-  xml_parser.setSkipDTDValidation(true);
-  xml_parser.parse(*is->getInputSource());
-  if (error_handler.getSawErrors()) {
-    throw Exception(CString("Error loading HRD file"));
+  XmlReader xml(is);
+  if (!xml.parse()) {
+    throw Exception("Error loading HRD file '" + is.getPath() + "'");
   }
-  xercesc::DOMDocument* hrdbase = xml_parser.getDocument();
-  xercesc::DOMElement* hbase = hrdbase->getDocumentElement();
+  std::list<XMLNode> nodes;
+  xml.getNodes(nodes);
 
-  if (hbase == nullptr || !xercesc::XMLString::equals(hbase->getNodeName(), hrdTagHrd)) {
-    throw Exception(CString("Error loading HRD file"));
+  if (nodes.begin()->name != hrdTagHrd) {
+    throw Exception("Incorrect hrd-file structure. Main '<hrd>' block not found. Current file " + is.getPath());
   }
 
-  for (xercesc::DOMNode* curel = hbase->getFirstChild(); curel; curel = curel->getNextSibling()) {
-    if (curel->getNodeType() == xercesc::DOMNode::ELEMENT_NODE && xercesc::XMLString::equals(curel->getNodeName(), hrdTagAssign)) {
-      auto* subelem = static_cast<xercesc::DOMElement*>(curel);
-      const XMLCh* xname = subelem->getAttribute(hrdAssignAttrName);
-      if (*xname == '\0') {
+  for (const auto& node : nodes.begin()->children) {
+    if (node.name == hrdTagAssign) {
+      const auto& name = node.getAttrValue(hrdAssignAttrName);
+      if (name.isEmpty()) {
         continue;
       }
 
-      const String* name = new CString(xname);
       auto rd_new = regionDefines.find(name);
       if (rd_new != regionDefines.end()) {
+        logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name, is.getPath());
         regionDefines.erase(rd_new);
       }
 
-      int val = 0;
-      CString dhrdAssignAttrFore = CString(subelem->getAttribute(hrdAssignAttrFore));
-      bool bfore = UnicodeTools::getNumber(&dhrdAssignAttrFore, &val);
-      int fore = val;
-      CString dhrdAssignAttrBack = CString(subelem->getAttribute(hrdAssignAttrBack));
-      bool bback = UnicodeTools::getNumber(&dhrdAssignAttrBack, &val);
-      int back = val;
-      int style = 0;
-      CString dhrdAssignAttrStyle = CString(subelem->getAttribute(hrdAssignAttrStyle));
-      if (UnicodeTools::getNumber(&dhrdAssignAttrStyle, &val)) {
-        style = val;
+      unsigned int fore = 0;
+      bool bfore = false;
+      const auto& sval = node.getAttrValue(hrdAssignAttrFore);
+      if (!sval.isEmpty()) {
+        bfore = UStr::HexToUInt(sval, &fore);
       }
-      RegionDefine* rdef = new StyledRegion(bfore, bback, fore, back, style);
-      std::pair<SString, RegionDefine*> pp(name, rdef);
-      regionDefines.emplace(pp);
 
-      delete name;
+      unsigned int back = 0;
+      bool bback = false;
+      const auto& sval2 = node.getAttrValue(hrdAssignAttrBack);
+      if (!sval2.isEmpty()) {
+        bback = UStr::HexToUInt(sval2, &back);
+      }
+
+      unsigned int style = 0;
+      const auto& sval3 = node.getAttrValue(hrdAssignAttrStyle);
+      if (!sval3.isEmpty()) {
+        UStr::HexToUInt(sval3, &style);
+      }
+
+      auto rdef = std::make_unique<StyledRegion>(bfore, bback, fore, back, style);
+      regionDefines.emplace(name, std::move(rdef));
     }
   }
 }
@@ -79,48 +66,43 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource* is)
 */
 void StyledHRDMapper::saveRegionMappings(Writer* writer) const
 {
-  writer->write(CString("<?xml version=\"1.0\"?>\n\
-<!DOCTYPE hrd SYSTEM \"../hrd.dtd\">\n\n\
-<hrd>\n"));
-  for (const auto & regionDefine : regionDefines) {
-    const StyledRegion* rdef = StyledRegion::cast(regionDefine.second);
+  writer->write("<?xml version=\"1.0\"?>\n");
+  for (const auto& regionDefine : regionDefines) {
+    const StyledRegion* rdef = StyledRegion::cast(regionDefine.second.get());
     char temporary[256];
-    writer->write(SString("  <define name='") + regionDefine.first + "'");
-    if (rdef->bfore) {
-      sprintf(temporary, " fore=\"#%06x\"", rdef->fore);
-      writer->write(CString(temporary));
+    constexpr auto size_temporary = std::size(temporary);
+    writer->write("  <define name='" + regionDefine.first + "'");
+    if (rdef->isForeSet) {
+      snprintf(temporary, size_temporary, " fore=\"#%06x\"", rdef->fore);
+      writer->write(temporary);
     }
-    if (rdef->bback) {
-      sprintf(temporary, " back=\"#%06x\"", rdef->back);
-      writer->write(CString(temporary));
+    if (rdef->isBackSet) {
+      snprintf(temporary, size_temporary, " back=\"#%06x\"", rdef->back);
+      writer->write(temporary);
     }
     if (rdef->style) {
-      sprintf(temporary, " style=\"#%06x\"", rdef->style);
-      writer->write(CString(temporary));
+      snprintf(temporary, size_temporary, " style=\"%u\"", rdef->style);
+      writer->write(temporary);
     }
-    writer->write(CString("/>\n"));
+    writer->write("/>\n");
   }
-  writer->write(CString("\n</hrd>\n"));
+  writer->write("\n</hrd>\n");
 }
 
 /** Adds or replaces region definition */
-void StyledHRDMapper::setRegionDefine(const String &name, const RegionDefine* rd)
+void StyledHRDMapper::setRegionDefine(const UnicodeString& name, const RegionDefine* rd)
 {
-  auto rd_old = regionDefines.find(&name);
+  if (!rd)
+    return;
 
   const StyledRegion* new_region = StyledRegion::cast(rd);
-  RegionDefine* rd_new = new StyledRegion(*new_region);
-  std::pair<SString, RegionDefine*> pp(name, rd_new);
-  regionDefines.emplace(pp);
+  auto rd_new = std::make_unique<StyledRegion>(*new_region);
 
-  // Searches and replaces old region references
-  for (auto & idx : regionDefinesVector) {
-    if (idx == rd_old->second) {
-      idx = rd_new;
-      break;
-    }
+  auto rd_old_it = regionDefines.find(name);
+  if (rd_old_it == regionDefines.end()) {
+    regionDefines.emplace(name, std::move(rd_new));
+  }
+  else {
+    rd_old_it->second = std::move(rd_new);
   }
 }
-
-
-

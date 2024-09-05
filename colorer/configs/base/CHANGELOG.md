@@ -13,15 +13,23 @@
     * a lot of syntax errors are highlighted
     * fixed bunch of bugs, especially in raw literals
 - [csharp] recognise functions with nullable results
+- [shell-posix] Comments are not recognized in case statement
+- [shell-posix] Commands are not recognized correctly after escaped new-line
+- [shell-bash] Redirection symbols < and > inside "magic backticks" block break background highlighting till the end of the file
+- [shell-bash] Fix magic backticks in for loop
+- [smarty] fixed the work of smarty templates
+- [markdown] amend emphasis with underscores
+- [markdown] fix trailing spaces in em and strong
 
 ### Changed
-- Simplified catalog.xml. 
+- Simplified catalog.xml.
 - Use new xsd schema for catalog.xml.
 - Common.jar rename to common.zip
 - reformat proto.hrc and included files; changed namespace.
 - Tweak visual.hrd xml CData markup
 - remove obsolete from visual-rgb.hrd
 - [groovy] add .gradle as groovy
+- Use the new shell-posix schema for shell scripts by default
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -37,6 +45,25 @@
 - [csharp] support C# 11 raw strings
 - [cpp] add support for C++11 string literals
 - [asm] add new registers, blocks. New masks for filenames and firstline
+- [shell-posix] add a new schema for POSIX shell with block structures and error checking
+- [shell-bash] add a new schema for bash script based on shell-posix
+- [asm] add directives
+- [c] add unix standard functions, const and others
+- [cpp] add some c++11 types
+- [csharp] add new number suffixes u, uy, etc.
+- [csharp] add new operators ?:, ??, etc.
+- [csharp] retire obsolete cmdlets
+- [cobol] many changes
+- [cobolfr] many changes
+- [jcl] many changes
+- [pl1] many changes
+- [cmake] updated for cmake version 3.29.2; add gen script for cmake
+- [smarty] add tpl extension and first line pattern
+- [prolog] add first line pattern
+- [shell-posix] add functions to outlined list
+- [shell-bash] add functions to outlined list
+- [markdown] added the ability to connect the backlight in 'code' by creating your own scheme 'markdown2:markdown2'
+- [markdown] highlight special all caps HTML tags
 
 ## [1.2.0] - 2021-09-12
 

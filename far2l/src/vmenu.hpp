@@ -265,7 +265,7 @@ private:
 	int ItemHiddenCount;
 	int ItemSubMenusCount;
 
-	BYTE Colors[VMENU_COLOR_COUNT];
+	uint64_t Colors[VMENU_COLOR_COUNT];
 
 	int MaxLineWidth;
 	bool bRightBtnPressed;
@@ -335,7 +335,7 @@ public:
 
 	void SetColors(struct FarListColors *ColorsIn = nullptr);
 	void GetColors(struct FarListColors *ColorsOut);
-	void SetOneColor(int Index, short Color);
+	void SetOneColor(int Index, uint64_t Color);
 
 	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -366,7 +366,7 @@ public:
 	int GetSelectPos() { return SelectPos; }
 	int GetSelectPos(struct FarListPos *ListPos);
 	int SetSelectPos(struct FarListPos *ListPos);
-	int SetSelectPos(int Pos, int Direct);
+	int SetSelectPos(int Pos, int Direct, bool stop_on_edge = false);
 	uint32_t GetCheck(int Position = -1);
 	void SetCheck(uint32_t Check, int Position = -1);
 

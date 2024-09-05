@@ -155,7 +155,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 		int First = TRUE;
 
 		while (WPanel->GetSelNameCompat(&strFileNameL, FileAttrL)) {
-			QuoteSpaceOnly(strFileNameL);
+			EscapeSpace(strFileNameL); //QuoteSpaceOnly(strFileNameL);
 
 			// Вот здесь фиг его знает - нужно/ненужно...
 			// если будет нужно - раскомментируем :-)
@@ -377,12 +377,8 @@ int SubstFileName(FARString &strStr,	// результирующая строк�
 
 	PSubstData->PreserveLFN = FALSE;
 	PSubstData->PassivePanel = FALSE;	// первоначально речь идет про активную панель!
-	FARString strTmp = strStr;
 
-	if (!IgnoreInput)
-		ReplaceVariables(strTmp, PSubstData);
-
-	const wchar_t *CurStr = strTmp;
+	const wchar_t *CurStr = strStr;
 	FARString strOut;
 
 	while (*CurStr) {
@@ -395,6 +391,10 @@ int SubstFileName(FARString &strStr,	// результирующая строк�
 	}
 
 	strStr = strOut;
+
+	if (!IgnoreInput)
+		ReplaceVariables(strStr, PSubstData);
+
 	return (PSubstData->PreserveLFN);
 }
 

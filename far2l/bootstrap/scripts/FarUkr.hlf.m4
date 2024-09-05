@@ -165,71 +165,71 @@ far2l, який працює у режимі WX.
 (for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
 
  #FAR2L command-line options:#
- #/a#
+ #-a#
  Заборона відображення символів з кодами 0 - 31 та 255. Може бути корисним при
 запуску FAR2L із telnet.
 
- #/ag#
+ #-ag#
  Заборона відображення псевдографічних символів з кодами > 127.
 
- #/an#
+ #-an#
  Не відображати псевдографічні символи зовсім.
 
- #/e[<рядок>[:<позиція>]] <filename>#
-Редагування вказаного файлу. Після /e можна додатково вказати рядок
+ #-e[<рядок>[:<позиція>]] <filename>#
+Редагування вказаного файлу. Після -e можна додатково вказати рядок
 та позицію у рядку, що встановлюються після запуску редактора.
- Наприклад: far/e70:2 readme.
+ Наприклад: far -e70:2 readme.
 
- #/p[<path>]#
+ #-p[<path>]#
  Шукати "основні" зовнішні модулі у папці, вказаній у <path>.
 Можна вказати кілька шляхів пошуку, розділених символом ';'. При вказівці
 шляхи пошуку можна використовувати змінні середовища.
 
- #/co#
+ #-co#
 Примушує FAR2L завантажувати зовнішні модулі лише з кешу. Завантаження при цьому відбувається
 швидше, але нові або змінені модулі не виявляються. Має сенс застосовувати
 ТІЛЬКИ при стабільному списку модулів. Після додавання, заміни або видалення модулів
 треба завантажити FAR2L без цього параметра. Якщо кешу немає, то модулі не завантажуватимуться.
 
- Зауваження щодо ключів /p та /co:
+ Зауваження щодо ключів -p та -co:
 
- - ^<wrap>якщо вказано порожній /p, то FAR2L запуститься без плагінів;
- - ^<wrap>якщо вказано /p<path>, то завантажаться тільки плагіни з <path>;
- - ^<wrap>якщо вказано тільки ключ /co і кеш плагінів не порожній, то
+ - ^<wrap>якщо вказано порожній -p, то FAR2L запуститься без плагінів;
+ - ^<wrap>якщо вказано -p<path>, то завантажаться тільки плагіни з <path>;
+ - ^<wrap>якщо вказано тільки ключ -co і кеш плагінів не порожній, то
 завантажуються плагіни з кешу;
- - ^<wrap>ключ /co ігнорується, якщо також вказано /p;
- - ^<wrap>якщо не вказані ключі /p та /co, то завантажаться плагіни
+ - ^<wrap>ключ -co ігнорується, якщо також вказано -p;
+ - ^<wrap>якщо не вказані ключі -p та -co, то завантажаться плагіни
 з основного каталогу та з каталогу, вказаного у параметрі
 "~Шлях до персональних плагінів~@PluginsManagerSettings@"
 
- #/m#
+ #-m#
  При старті FAR2L не завантажуватиме макрокоманди з реєстру.
 
- #/ma#
+ #-ma#
  При старті FAR2L не виконуватиме макрокоманди з опцією "Виконувати після запуску FAR2L".
 
- #/u <username>#
+ #-u <username>#
  Дозволяє використовувати різні настройки для різних користувачів.
- Наприклад: far /u guest
+ Наприклад: far -u guest
 
- #/v <filename>#
+ #-v <filename>#
 Перегляд вказаного файлу. Якщо як <filename> використано `#-#', дані
 будуть читатися зі stdin (стандартного вхідного потоку).
 
- Наприклад, "dir | far /v -" виведе результат роботи команди dir.
+ Наприклад, "dir | far -v -" виведе результат роботи команди dir.
 
  Якщо при використанні '-' вхідний потік порожній (наприклад, ви не вказали команду dir
 у вказаному прикладі), то FAR2L чекатиме завершення вхідного потоку вічно.
 Це особливість поточної версії FAR2L.
 
- #/w#
+ #-w#
  Підлаштовуватись під розмір консольного вікна замість консольного буфера.
 
- #/x#
+ #-x#
 Вимкнути обробку виняткових ситуацій. Ця опція призначена для
 розробників зовнішніх модулів та у нормальній ситуації вказувати цю опцію не рекомендується.
 
- #/set:<parameter>=<value>#
+ #-set:<parameter>=<value>#
  Перевизначити параметр конфігурації, подробиці дивіться ~far:config~@FarConfig@.
  Приклад: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0x10001 -set:System.FindFolders=false
 
@@ -794,35 +794,37 @@ FAR2L також вміє обробляти ~колесо миші~@MsWheel@.
 
  Перемістити діалог можна мишею чи комбінацією #Ctrl-F5#.
 
- #Липкі керуючі кнопки# якщо ваше оточення не дає вам використовувати
+    #Липкі керуючі кнопки# якщо ваше оточення не дає вам використовувати
 деякі кнопкосполучення через обмеження TTY режиму або якщо кнопкосполучення
 зайнято зовнішньою програмою, то ви можете використовувати липкі керуючі кнопки.
 Це означає кнопка, яка віртуально залишається натиснутою до наступного
 не-керуючої (цифро-символьної) кнопки:
- Ctrl+SPACE дає липкий CONTROL
- Alt+SPACE дає липкий ALT
- правий_Ctrl+SPACE дає липкий правий CONTROL
- правий_Alt+SPACE дає липкий правий ALT
-Іншим способом отримати працездатні гарячі кнопки може бути перенастроювання
+    #Ctrl+SPACE# дає липкий CONTROL
+    #Alt+SPACE# дає липкий ALT
+    #правий_Ctrl+SPACE# дає липкий правий CONTROL
+    #правий_Alt+SPACE# дає липкий правий ALT
+    Іншим способом отримати працездатні гарячі кнопки може бути перенастроювання
 зовнішніх програм (з метою звільнити потрібні поєднання) або використання
-опції ексклюзивної обробки натискань у ~налаштуваннях інтерфейсу~@InterfSettings@.
+опції ексклюзивної обробки натискань у ~налаштуваннях ввода~@InputSettings@
+(only in GUI backend mode).
 
 
 @SpecCmd
 $ #Special commands#
  Special FAR pseudo-command usually starting with a prefix and a colon are processed
 in the far2l ~internal command line~@CmdLineCmd@ and
-in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@.
+in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@.
 
    #far:about#  - Far information, list and information about plugins.
 
    #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
+   #view:<command# or #far:view:<command# or #far:view < command# - open in viewer result of #command# output in temporary file.
 
    #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
-
    #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
+   #edit:<command# or #far:edit:<command# or #far:edit < command# - open in editor result of #command# output in temporary file.
 
    #exit#       - reset shell in build-in ~Terminal~@Terminal@.
 
@@ -1483,14 +1485,14 @@ $ #Режими інтерфейсу#
 
  - #Режим GUI:# виводить інтерфейс у своє власне графічне вікно, забезпечуючи найповнішу
 підтримка клавіатурних комбінацій.
-- #Режим TTY:# виводить інтерфейс у стандартний термінал. Це найбільш сумісний спосіб, але він надає
+ - #Режим TTY:# виводить інтерфейс у стандартний термінал. Це найбільш сумісний спосіб, але він надає
 найменш повну підтримку клавіатурних комбінацій, немає загального буфера обміну тощо.
  - #Режим TTY|X:# виводить інтерфейс у звичайний термінал, але використовує X11 для доступу до буфера обміну та для отримання
 станів клавіш-модифікаторів Це забезпечує більш зручне використання, але все ще деякі клавіатурні
 комбінації можуть не підтримуватись.
  - #Режим TTY|Xi:# виводить інтерфейс у звичайний термінал, але використовує X11 з розширеннями Xi для доступу до буфера обміну
 та для отримання станів усіх клавіш клавіатури. Це забезпечує найзручніше використання у звичайному терміналі.
-- #Режим TTY|F:# виводить інтерфейс термінал створений іншим додатком far2l instance. Це забезпечує рівень
+ - #Режим TTY|F:# виводить інтерфейс термінал створений іншим додатком far2l instance. Це забезпечує рівень
 зручність використання аналогічний режиму GUI (якщо термінал наданий GUI версією far2l).
 
  Якщо ви хочете запустити far2l віддалено з максимальною зручністю, то рекомендується або запустити його із сесії
@@ -1503,6 +1505,12 @@ $ #Режими інтерфейсу#
 єдиним безпечним методом віддаленого запуску far2l на не довіреному сервері з підтримкою всіх звичних
 клавіатурних поєднань та інших зручностей.
 
+    - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
+in pure TTY| to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings;
+TTY|X uses X11 to access clipboard):
+        - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
+        - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
+        - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
 
 @ConfirmDlg
 $ #Підтвердження#
@@ -1543,7 +1551,7 @@ $ #Менеджер зовнішніх модулів#
  #Шлях до персональних плагінів#
 Вкажіть повний шлях, де FAR2L шукатиме "персональні" плагіни на додаток до "основних". Можна вказати
 кілька шляхів пошуку, розділених символом ';'. Якщо вказати шлях пошуку, можна використовувати змінні середовища.
-Персональні плагіни не завантажуватимуться, якщо в параметрах ~командного рядка~@CmdLine@ вказано один із ключів /p або /co.
+Персональні плагіни не завантажуватимуться, якщо в параметрах ~командного рядка~@CmdLine@ вказано один із ключів -p або -co.
 
 
 @ChoosePluginMenu
@@ -1933,9 +1941,11 @@ $ #Історія команд#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
  Toggle history view:                                         #Ctrl-T#
-            * with date lines + time column
+            * with date lines + time-path column
             * with date lines (as in far3)
             * plain history (as in far2)
+
+ Change path width in time-path column          #Ctrl-Left,Ctrl-Right#
 
  Show additional information                                      #F3#
 
@@ -1951,6 +1961,8 @@ $ #Історія команд#
 опцію з ~діалогу системних параметрів~@SystemSettings@.
 
  Зазначені пункти не видалятимуться при очищенні історії.
+
+ Remove duplicates method can be chosen in the ~діалогу системних параметрів~@SystemSettings@.
 
  For automatic exclusion from history, see ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
@@ -2086,6 +2098,8 @@ $ #Порівняння папок#
 Вкладені папки не порівнюються. Для порівняння файлів використовується їхнє ім'я,
 дата та час, але не вміст.
 
+ See option #Case sensitive when compare or select# in ~Установки панелі~@PanelSettings@.
+
 
 @UserMenu
 $ #Меню користувача#
@@ -2131,14 +2145,15 @@ $ #Меню користувача#
  У разі редагування або створення вкладеного меню достатньо ввести заголовок
 вкладеного меню та, при необхідності, гарячу клавішу.
 
-Місцеві меню зберігаються у текстових файлах #FarMenu.Ini#. Головне меню з
-за замовчуванням зберігається в Реєстрі, але його також можна тримати у файлі. Якщо створити
-місцеве меню в папці FAR2L, то воно буде використане замість того, що зберігається в
-Реєстр головного меню.
+ Місцеві меню зберігаються у текстових файлах #FarMenu.Ini#.
+ Головне меню зберігаються у профілі у #~~/.config/far2l/settings/user_menu.ini#
+(формат відрізняється від FarMenu.ini).
+Якщо створити місцеве меню в папці FAR2L,
+то воно буде використане замість того, що зберігається у профілі головного меню.
 
  Ви можете закрити меню на будь-якому рівні вкладеності, натиснувши #Shift-F10#.
 
- також
+ Також
     ~Special commands~@SpecCmd@.
     список ~макроклавіш~@KeyMacroUserMenuList@, доступних у меню користувача.
     Common ~menu~@MenuCmd@ keyboard commands.
@@ -2393,6 +2408,9 @@ $ #Налаштування панелі#
 #Gray +# та #Gray *#. Інакше ці
  команди працюють лише з файлами.
 
+ #Case sensitive when compare or select#
+Influence on ~Порівняння папок~@CompFolders@ and ~Помітка файлів~@SelectFiles@.
+
  #Сортувати імена# Застосовувати режим сортування для розширення
 #папок розширення# не тільки до файлів, але і до папок. При
  увімкненої опції сортування з розширення
@@ -2583,12 +2601,22 @@ $ #Налаштування командного рядка#
 
 @AutoCompleteSettings
 $ #Налаштування автозавершення та історії#
-  #Шаблони &винятковий# also affect which commands are stored in far2l history.
-  For example, adding " *"  (mandatory in quotes) excludes from adding in history
-  commands that start with a space (similar to the bash $HISTCONTROL=ignorespace).
-  Info: in far2l history work like bash $HISTCONTROL
-   with options ignoredups (lines which match the previous line are not saved)
-   и erasedups (all previous lines matching the current line are removed from the history).
+  #Показувати список#
+  Show list with autocomplete suggestions.
+
+  #Модальний режим#
+  in mode #[x] Модальний режим# selected list item put in command line only after #Enter#,
+  in mode #[ ] Модальний режим# selected list item put in command line immediately.
+
+  #Підставляти перший відповідний варіант#
+  The first matched item is append immediately after symbols in the command line.
+
+  #Шаблони винятковий# also affect which commands are stored in far2l history.
+  For example, adding #" *"# (mandatory in quotes) excludes from adding in history
+  commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
+  Info: in far2l history work like bash #$HISTCONTROL#
+   with options #ignoredups# (lines which match the previous line are not saved)
+   and #erasedups# (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
 $ #Налаштування інформаційної панелі#
@@ -3215,6 +3243,14 @@ Note that favorites file can contain shell environment variables denoted with $
 character like $HOME, and shell commands substitution, i.e. $(/path/to/some/script.sh)
 will invoke that script.sh and its output will be embedded into content of this file
 during processing. This allows to implement custom dynamic locations list composing.
+
+    If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
+then check #Exceptions list# in ~Location Menu Options~@ChangeLocationConfig@ (#F9#).
+E.g., the #/run/*# pattern is included there by default.
+If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
+you need to delete #/run/*# substring from exceptions list.
+After that add more accurate patterns such as #/run/user/*#
+in order to hide garbage mountpoints from the Location menu.
 
  також
     список ~макроклавіш~@KeyMacroDisksList@, доступних у меню переходу.
@@ -3940,6 +3976,9 @@ $ #Помітка файлів#
 
  Якщо жоден файл не вибраний, буде оброблено лише файл під курсором.
 
+ See options #Позначка папок# and
+#Case sensitive when compare or select# in ~Установки панелі~@PanelSettings@.
+
 
 @CopyFiles
 $ #Копіювання, перенесення, перейменування та створення зв'язків та посилань#
@@ -4259,8 +4298,8 @@ $ # Застосувати команду
 однойменні RAR-архіви. Команда 'explorer /select,!.!' запустить провідник і
 встановить курсор на поточному файлі чи папці.
 
- See also ~"Special commands"~@SpecCmd@
- також ~"Команда операційної системи"~@OSCommands@
+ See also ~Special commands~@SpecCmd@
+ також ~Команда операційної системи~@OSCommands@
 
 
 @OSCommands
@@ -4350,7 +4389,7 @@ $ #Змінні середовища #
 
  #FARLANG# назва поточної мови інтерфейсу
 
-#FARUSER# ^<wrap>ім'я користувача, вказане у параметрі /u ~командного рядка~@CmdLine@
+#FARUSER# ^<wrap>ім'я користувача, вказане у параметрі -u ~командного рядка~@CmdLine@
 
  #FARDIRSTACK# ^<wrap>зміст вершини стека каталогів (який управляється командами pushd і popd)
 
@@ -4819,6 +4858,9 @@ $ #Макроси: макромова#
 правки реєстру або шляхом застосування спеціальних програм/плагінів.
 
  Опис макромови можна знайти у супровідній документації.
+
+ Онлайн документація:
+ ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroList
 $ #Макроси: Список встановлених макросів#

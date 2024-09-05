@@ -10,23 +10,24 @@ message(STATUS "Build Colorer: ${COLORER_VERSION}")
 
 set(SOURCES
     src/pcolorer2/ChooseTypeMenu.h
-    src/pcolorer2/ConsoleAnnotation.h
     src/pcolorer2/FarEditor.h
     src/pcolorer2/FarEditorSet.h
     src/pcolorer2/FarHrcSettings.h
     src/pcolorer2/pcolorer.h
-    src/pcolorer2/resource.h
-    src/pcolorer2/StringBuffer.h
     src/pcolorer2/tools.h
     src/pcolorer2/ChooseTypeMenu.cpp
     src/pcolorer2/FarEditor.cpp
     src/pcolorer2/FarEditorSet.cpp
     src/pcolorer2/FarHrcSettings.cpp
     src/pcolorer2/pcolorer.cpp
-    src/pcolorer2/StringBuffer.cpp
     src/pcolorer2/tools.cpp
 )
 
+# set options for colorer-library
+set(COLORER_USE_ICU_STRINGS OFF)
+set(COLORER_USE_LIBXML ON)
+set(COLORER_BUILD_HARD_WARNINGS OFF)
+set(COLORER_BUILD_OLD_COMPILERS ON)
 
 if (USESPDLOG)
     FIND_PACKAGE(Spdlog REQUIRED)
@@ -50,12 +51,15 @@ if (USESPDLOG)
     else()
         message("SPDLOG: using without forced SPDLOG_FMT_EXTERNAL cuz ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled exists")
     endif()
+    set(COLORER_USE_DUMMY_LOGGER OFF)
+else()
+    set(COLORER_USE_DUMMY_LOGGER ON)
 endif()
 
 
 add_library(colorer MODULE ${SOURCES})
 
-FIND_PACKAGE(XercesC REQUIRED)
+FIND_PACKAGE(LibXml2 REQUIRED)
 
 # sometimes libstd requires linking to libfmt, sometimes not
 # so, if libfmt there - lets link to it, if not - then dont care
@@ -77,7 +81,6 @@ endif()
 
 target_include_directories(colorer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
-    PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
 if(USESPDLOG)
@@ -85,7 +88,6 @@ if(USESPDLOG)
 endif()
 
 target_link_libraries(colorer
-    ${XERCESC_LIBRARIES}
     ${fmt_LIBRARY_OPTIONAL}
     utils
     colorer_lib
@@ -119,3 +121,8 @@ add_custom_command(TARGET colorer POST_BUILD
 
 add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 
+set_target_properties(colorer PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)

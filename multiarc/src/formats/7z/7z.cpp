@@ -254,12 +254,12 @@ BOOL WINAPI _export SEVENZ_CloseArchive(struct ArcInfo *Info)
 
 
 
-BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *DefaultExt)
+BOOL WINAPI _export SEVENZ_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
   if (Type==0)
   {
-    strcpy(FormatName,"7Z");
-    strcpy(DefaultExt,"7z");
+    FormatName = "7Z";
+    DefaultExt = "7z";
     return TRUE;
   }
   return FALSE;
@@ -267,7 +267,7 @@ BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *Default
 
 
 
-BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
+BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,std::string &Dest)
 {
   if (Type==0)
   {
@@ -275,22 +275,22 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
       /*Extract               */"^7z x %%A %%FMq*4096",
       /*Extract without paths */"^7z e %%A %%FMq*4096",
       /*Test                  */"^7z t %%A",
-      /*Delete                */"7z d {-p%%P} %%A @%%LN",
+      /*Delete                */"7zz d {-p%%P} %%A @%%LN || 7z d {-p%%P} %%A @%%LN",
       /*Comment archive       */"",
       /*Comment files         */"",
       /*Convert to SFX        */"",
       /*Lock archive          */"",
       /*Protect archive       */"",
       /*Recover archive       */"",
-      /*Add files             */"7z a -y {-p%%P} %%A @%%LN",
-      /*Move files            */"7z a -y -sdel {-p%%P} %%A @%%LN",
-      /*Add files and folders */"7z a -y {-p%%P} %%A @%%LN",
-      /*Move files and folders*/"7z a -y -sdel {-p%%P} %%A @%%LN",
+      /*Add files             */"7zz a -y {-p%%P} %%A @%%LN || 7z a -y {-p%%P} %%A @%%LN",
+      /*Move files            */"7zz a -y -sdel {-p%%P} %%A @%%LN || 7z a -y -sdel {-p%%P} %%A @%%LN",
+      /*Add files and folders */"7zz a -y {-p%%P} %%A @%%LN || 7z a -y {-p%%P} %%A @%%LN",
+      /*Move files and folders*/"7zz a -y -sdel {-p%%P} %%A @%%LN || 7z a -y -sdel {-p%%P} %%A @%%LN",
       /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {
-      strcpy(Dest,Commands[Command]);
+      Dest = Commands[Command];
       return(TRUE);
     }
   }

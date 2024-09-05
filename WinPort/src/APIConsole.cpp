@@ -154,6 +154,11 @@ extern "C" {
 		return TRUE;
 	}
 
+	WINPORT_DECL(SetConsoleCursorBlinkTime,VOID,(HANDLE hConsoleOutput, DWORD dwMilliseconds ))
+	{
+		ChooseConOut(hConsoleOutput)->SetCursorBlinkTime(dwMilliseconds);
+	}
+
 	WINPORT_DECL(GetConsoleCursorInfo,BOOL,(HANDLE hConsoleOutput,CONSOLE_CURSOR_INFO *lpConsoleCursorInfo))
 	{
 		UCHAR height;
@@ -313,7 +318,6 @@ extern "C" {
 		return TRUE;
 	}
 
-
 	static PHANDLER_ROUTINE gHandlerRoutine = NULL;
 
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ))
@@ -406,6 +410,16 @@ extern "C" {
 	WINPORT_DECL(GetConsoleColorPalette,BYTE,(HANDLE hConsoleOutput))
 	{
 		return ChooseConOut(hConsoleOutput)->GetColorPalette();
+	}
+
+	WINPORT_DECL(GetConsoleBasePalette,VOID,(HANDLE hConsoleOutput, VOID *p))
+	{
+		return ChooseConOut(hConsoleOutput)->GetBasePalette(p);
+	}
+
+	WINPORT_DECL(SetConsoleBasePalette,BOOL,(HANDLE hConsoleOutput, VOID *p))
+	{
+		return ChooseConOut(hConsoleOutput)->SetBasePalette(p);
 	}
 
 	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK))

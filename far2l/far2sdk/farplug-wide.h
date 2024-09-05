@@ -343,14 +343,18 @@ enum FarMessagesProc
 
 	DM_GETDIALOGINFO,
 
-	DM_GETCOLOR,
-	DM_SETCOLOR,
-
 	DM_SETREADONLY,
 
-	DM_GETTRUECOLOR,	// Param1 - Item ID, Param2 - DialogItemTrueColors *
-	DM_SETTRUECOLOR,	// Param1 - Item ID, Param2 - const DialogItemTrueColors *
+//	DM_GETCOLOR,
+//	DM_SETCOLOR,
+	DM_GETDEFAULTCOLOR, // Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
 
+	DM_GETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
+	DM_GETCOLOR = DM_GETTRUECOLOR,
+	DM_SETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
+	DM_SETCOLOR = DM_SETTRUECOLOR,
+
+	DM_SETTEXTPTRSILENT,
 
 	DN_FIRST=0x1000,
 	DN_BTNCLICK,
@@ -518,9 +522,8 @@ struct FarListColors
 	DWORD  Flags;
 	DWORD  Reserved;
 	int    ColorCount;
-	LPBYTE Colors;
+	uint64_t *Colors;
 };
-
 
 struct FarDialogItem
 {
@@ -876,7 +879,7 @@ typedef int (WINAPI *FARAPICONTROL)(
 typedef void (WINAPI *FARAPITEXT)(
 	int X,
 	int Y,
-	int Color,
+	uint64_t Color,
 	const wchar_t *Str
 );
 
@@ -1348,7 +1351,7 @@ struct FarSetColors
 	DWORD Flags;
 	int StartIndex;
 	int ColorCount;
-	LPBYTE Colors;
+	uint64_t *Colors;
 };
 
 struct FarTrueColor
@@ -1424,9 +1427,9 @@ struct PROGRESSVALUE
 typedef INT_PTR(WINAPI *FARAPIADVCONTROL)(
 	INT_PTR ModuleNumber,
 	int Command,
-	void *Param
+	void *Param1,
+	void *Param2
 );
-
 
 enum VIEWER_CONTROL_COMMANDS
 {
@@ -1786,7 +1789,7 @@ struct EditorColor
 	int StringNumber;
 	int ColorItem;
 	int StartPos;
-	int EndPos; // -1 means edge of visible screen part, otherwise wanted edge position
+	int EndPos;
 	int Color;
 };
 
@@ -1891,6 +1894,8 @@ typedef void (WINAPI *FARSTDLOCALSTRUPR)(wchar_t *s1);
 typedef void (WINAPI *FARSTDLOCALSTRLWR)(wchar_t *s1);
 typedef int (WINAPI *FARSTDLOCALSTRICMP)(const wchar_t *s1,const wchar_t *s2);
 typedef int (WINAPI *FARSTDLOCALSTRNICMP)(const wchar_t *s1,const wchar_t *s2,int n);
+typedef int (WINAPI *FARSTDLOCALSTRCMP)(const wchar_t *s1,const wchar_t *s2);
+typedef int (WINAPI *FARSTDLOCALSTRNCMP)(const wchar_t *s1,const wchar_t *s2,int n);
 
 enum PROCESSNAME_FLAGS
 {
@@ -2113,6 +2118,9 @@ typedef struct FarStandardFunctions
 	FARBACKGROUNDTASK          BackgroundTask;
 	FARSTRCELLSCOUNT           StrCellsCount;
 	FARSTRSIZEOFCELLS          StrSizeOfCells;
+
+	FARSTDLOCALSTRICMP         LStrcmp;
+	FARSTDLOCALSTRNICMP        LStrncmp;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

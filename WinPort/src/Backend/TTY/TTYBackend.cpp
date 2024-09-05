@@ -80,7 +80,7 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
@@ -207,6 +207,16 @@ void TTYBackend::UpdateBackendIdentification()
 	g_winport_backend = s_backend_identification;
 }
 
+static bool UnderWayland()
+{
+	const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	if (xdg_st && strcasecmp(xdg_st, "wayland") == 0)
+		return true;
+	if (getenv("WAYLAND_DISPLAY"))
+		return true;
+	return false;
+}
+
 void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
@@ -221,8 +231,10 @@ void TTYBackend::ReaderThread()
 			}
 
 		} else {
-			if (!strchr(_nodetect, 'x') || strstr(_nodetect, "xi")) {
-				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi"));
+			if ((_nodetect & NODETECT_X)==0) {
+
+				// disable xi on Wayland as it not work there anyway and also causes delays
+				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -367,7 +379,7 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
-		TTYOutput tty_out(_stdout, _far2l_tty, _norgb);
+		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -766,20 +778,17 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 	}
 
 	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-
 	{
 		std::lock_guard<std::mutex> lock(_palette_mtx);
 		std::swap(override_default_palette, _override_default_palette);
 	}
 
 	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_ae.palette = true;
-			_async_cond.notify_all();
-			while (_ae.palette) {
-				_async_cond.wait(lock);
-			}
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.palette = true;
+		_async_cond.notify_all();
+		while (_ae.palette) {
+			_async_cond.wait(lock);
 		}
 	}
 
@@ -796,19 +805,70 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
+	if (Index == (DWORD)-1) {
+		const DWORD64 orig_attrs = g_winport_con_out->GetAttributes();
+		DWORD64 new_attrs = orig_attrs;
+		if ((*ColorFG & 0xff000000) == 0) {
+			SET_RGB_FORE(new_attrs, *ColorFG);
+		}
+		if ((*ColorBK & 0xff000000) == 0) {
+			SET_RGB_BACK(new_attrs, *ColorBK);
+		}
+		if (new_attrs != orig_attrs) {
+			g_winport_con_out->SetAttributes(new_attrs);
+		}
+
+		*ColorFG = ConsoleForeground2RGB(g_winport_palette, orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		*ColorBK = ConsoleBackground2RGB(g_winport_palette, orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		return;
+	}
+
 	if (Index >= BASE_PALETTE_SIZE) {
 		fprintf(stderr, "%s: too big index=%u\n", __FUNCTION__, Index);
 		return;
 	}
 
+	const DWORD fg = (*ColorFG == (DWORD)-1) ? g_winport_palette.foreground[Index].AsRGB() : *ColorFG;
+	const DWORD bk = (*ColorBK == (DWORD)-1) ? g_winport_palette.background[Index].AsRGB() : *ColorBK;
+	bool palette_changed = false;
 	{
 		std::unique_lock<std::mutex> lock(_palette_mtx);
-		if (_palette.foreground[Index] == *ColorFG && _palette.background[Index] == *ColorBK) {
-			return;
+		*ColorFG = _palette.foreground[Index];
+		*ColorBK = _palette.background[Index];
+		if (fg != (DWORD)-2 && _palette.foreground[Index] != fg) {
+			_palette.foreground[Index] = fg;
+			palette_changed = true;
 		}
+		if (bk != (DWORD)-2 && _palette.background[Index] != bk) {
+			_palette.background[Index] = bk;
+			palette_changed = true;
+		}
+	}
 
-		std::swap(_palette.foreground[Index], *ColorFG);
-		std::swap(_palette.background[Index], *ColorBK);
+	if (palette_changed) {
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.palette = true;
+		_async_cond.notify_all();
+		while (_ae.palette) {
+			_async_cond.wait(lock);
+		}
+	}
+}
+
+void TTYBackend::OnConsoleGetBasePalette(void *pbuff)
+{
+	memcpy(pbuff, &g_winport_palette, BASE_PALETTE_SIZE * sizeof(DWORD) * 2);
+
+	return;
+}
+
+bool TTYBackend::OnConsoleSetBasePalette(void *pbuff)
+{
+	if (!pbuff) return false;
+
+	{
+		std::unique_lock<std::mutex> lock(_palette_mtx);
+		memcpy(&_palette, pbuff, BASE_PALETTE_SIZE * sizeof(DWORD) * 2);
 	}
 
 	std::unique_lock<std::mutex> lock(_async_mutex);
@@ -817,6 +877,8 @@ void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *Colo
 	while (_ae.palette) {
 		_async_cond.wait(lock);
 	}
+
+	return true;
 }
 
 void TTYBackend::OnConsoleChangeFont()
@@ -825,6 +887,11 @@ void TTYBackend::OnConsoleChangeFont()
 
 void TTYBackend::OnConsoleSaveWindowState()
 {
+}
+
+void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
+{
+
 }
 
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
@@ -996,7 +1063,20 @@ void TTYBackend::OnUsingExtension(char extension)
 
 void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 {
-	if (_ttyx && !_using_extension) {
+	bool in_kernel = 0;
+	// In kernel console use kernel control keys info even if using TTY|X for clipboard
+	#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+		int kd_mode;
+		#if defined(__linux__)
+		if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
+		#else
+		if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
+		#endif
+			in_kernel = 1;
+		}
+	#endif
+
+	if (_ttyx && !_using_extension && !in_kernel) {
 		_ttyx->InspectKeyEvent(event);
 
 	} else {
@@ -1004,11 +1084,7 @@ void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 	}
 
 	if (!event.wVirtualKeyCode) {
-		if (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
-			event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);
-		} else {
-			event.wVirtualKeyCode = VK_UNASSIGNED;
-		}
+		event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);
 	}
 	if (!event.uChar.UnicodeChar && IsEnhancedKey(event.wVirtualKeyCode)) {
 		event.dwControlKeyState|= ENHANCED_KEY;
@@ -1220,7 +1296,7 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
 
